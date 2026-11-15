@@ -1,0 +1,15 @@
+import Link from "next/link";
+import { AlbumArtwork } from "@/components/album-artwork";
+import { Button } from "@/components/ui/button";
+import { getPublicCollections, type PublicCollection } from "@/features/collections/queries";
+import { safeCoverUrl } from "@/lib/music/urls";
+
+export function CollectionCard({ collection }: { collection: PublicCollection }) {
+  const albums = [...collection.curator_collection_albums].sort((a, b) => a.position - b.position);
+  return <article className="min-w-0 rounded-xl border bg-card/50 p-5"><Link href={`/colecciones/${collection.id}`} className="group block"><div className="mb-5 grid grid-cols-3 gap-2">{albums.slice(0, 3).map(({ albums: album }) => <AlbumArtwork key={album.id} url={safeCoverUrl(album.cover_url ?? undefined)} title={album.title} className="aspect-square w-full rounded-md object-cover shadow-sm transition-transform group-hover:-translate-y-1" />)}</div><p className="mb-2 font-mono text-xs text-secondary">{albums.length} DISCOS · UNA SELECCIÓN HUMANA</p><h3 className="break-words text-2xl group-hover:text-primary">{collection.title}</h3></Link><p className="my-3 line-clamp-3 break-words text-sm leading-relaxed text-muted-foreground">{collection.introduction}</p>{collection.profiles.nick && <Link href={`/curadores/${collection.profiles.nick}`} className="text-xs text-primary hover:underline">Por @{collection.profiles.nick}</Link>}</article>;
+}
+export async function CollectionList({ userId, page, basePath, own = false }: { userId?: string; page: number; basePath: string; own?: boolean }) {
+  const { collections, total } = await getPublicCollections(page, userId);
+  const pageHref = (value: number) => `${basePath}?${userId ? "colecciones" : "page"}=${value}#colecciones`;
+  return <section id="colecciones" className="mt-10 scroll-mt-8"><div className="mb-6 flex flex-wrap items-center justify-between gap-4"><div><p className="eyebrow mb-2">DISCOS CON UN HILO EN COMÚN</p><h2 className="text-3xl">{own ? "Tus colecciones." : userId ? "Colecciones del curador." : "Selecciones para perderse."}</h2></div>{own && <Button asChild><Link href="/colecciones/nueva">Crear colección</Link></Button>}</div>{collections.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{collections.map(collection => <CollectionCard key={collection.id} collection={collection} />)}</div> : <p className="rounded-xl border border-dashed bg-card/30 p-8 text-sm leading-relaxed text-muted-foreground">{total ? "No hay colecciones en esta página." : own ? "Todavía no has creado una selección. Reúne esos discos que te apetece escuchar juntos." : "Todavía no hay colecciones publicadas. Un buen momento para inaugurar esta estantería."}</p>}{total > 12 && <nav aria-label="Páginas de colecciones" className="mt-6 flex justify-center gap-4 text-sm">{page > 1 && <Link href={pageHref(page - 1)} className="underline">Anterior</Link>}<span>{page} / {Math.ceil(total / 12)}</span>{page * 12 < total && <Link href={pageHref(page + 1)} className="underline">Siguiente</Link>}</nav>}</section>;
+}

@@ -1,0 +1,11 @@
+.env*
+.git/
+.next/
+.pnpm-store/
+node_modules/
+/output/
+/supabase/
+/docs/
+*.tsbuildinfo
+iniciar-local.cmd
+iniciar-local.ps1
